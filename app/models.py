@@ -23,18 +23,6 @@ class ChatRequest(BaseModel):
     """
     messages: list[ChatMessage] = Field(..., min_length=1)
 
-    @field_validator("messages")
-    @classmethod
-    def validate_message_count(cls, v: list[ChatMessage]) -> list[ChatMessage]:
-        """Ensure we haven't exceeded the turn budget."""
-        if len(v) > 7:
-            # 7 prior messages + the upcoming assistant reply = 8 turns max
-            raise ValueError(
-                f"Conversation exceeds the 8-turn limit: "
-                f"received {len(v)} messages"
-            )
-        return v
-
 
 # ── Response Models ────────────────────────────────────────────────────────
 
