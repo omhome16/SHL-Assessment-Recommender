@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 
 from app.agent import process_chat
 from app.catalog import catalog_index
@@ -67,6 +67,80 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Welcome Landing Page ───────────────────────────────────────────────────
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """Styled landing page for the Hugging Face Spaces interface."""
+    return """
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <title>SHL Assessment Recommender</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                    color: white;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    margin: 0;
+                }
+                .container {
+                    text-align: center;
+                    background: rgba(255, 255, 255, 0.1);
+                    padding: 40px;
+                    border-radius: 12px;
+                    backdrop-filter: blur(10px);
+                    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.18);
+                    max-width: 500px;
+                }
+                h1 { margin-bottom: 10px; font-size: 2.2rem; }
+                p { color: #f0f2f5; font-size: 1.1rem; line-height: 1.6; }
+                .endpoints {
+                    margin-top: 30px;
+                    text-align: left;
+                    display: inline-block;
+                }
+                .endpoint-item {
+                    margin: 12px 0;
+                }
+                code {
+                    background: rgba(0,0,0,0.4);
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    font-family: monospace;
+                    font-size: 0.95rem;
+                }
+                a {
+                    color: #ffeb3b;
+                    text-decoration: none;
+                    font-weight: bold;
+                }
+                a:hover {
+                    text-decoration: underline;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🤖 SHL Assessment Recommender</h1>
+                <p>The FastAPI conversational agent service is active and running on Hugging Face Spaces.</p>
+                <div class="endpoints">
+                    <div class="endpoint-item">🟢 <strong>Readiness check:</strong> <code>GET /health</code></div>
+                    <div class="endpoint-item">💬 <strong>Conversational API:</strong> <code>POST /chat</code></div>
+                    <div class="endpoint-item">📖 <strong>API Documentation:</strong> <a href="/docs" target="_blank">Interactive Swagger Docs</a></div>
+                </div>
+            </div>
+        </body>
+    </html>
+    """
 
 
 # ── Health check ───────────────────────────────────────────────────────────
