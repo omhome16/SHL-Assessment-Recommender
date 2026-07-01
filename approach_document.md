@@ -8,7 +8,7 @@ The system is a **stateless FastAPI service** with two endpoints (`GET /health`,
 1. **Context extraction** — Concatenate user messages into a search query
 2. **Hybrid retrieval** — BM25 (keyword) + sentence-transformer embeddings (semantic) scored as `0.4 × BM25 + 0.6 × cosine_similarity` over 377 catalog items
 3. **Prompt construction** — System prompt with scope rules, conversation flow instructions, turn budget, and top-25 retrieved catalog items as grounding context
-4. **Single LLM call** — Gemini 2.0 Flash with `response_mime_type="application/json"` for structured output
+4. **Single LLM call** — Groq (Llama-3.3-70b-versatile) in JSON mode for structured output
 5. **Validation** — Every recommendation verified against the catalog before returning; hallucinated items are silently dropped
 
 ## 2. Design Choices
@@ -17,7 +17,7 @@ The system is a **stateless FastAPI service** with two endpoints (`GET /health`,
 
 **Why single-call LLM, not multi-step chains?** Under a 30-second timeout with cold-start constraints, every millisecond counts. A single call with well-structured prompts achieves the same intent classification, retrieval grounding, and response formatting that a LangChain chain would — without the latency overhead. The system prompt encodes the full decision tree (clarify/recommend/refine/compare/refuse) so the LLM handles routing internally.
 
-**Why Gemini 2.0 Flash?** Free tier, fast inference (~2–5s per call), native JSON output mode, and strong instruction following. The `response_mime_type` parameter eliminates JSON parsing issues that plague other models.
+**Why Groq & Llama 3.3 70B?** Exceptionally fast inference (~1.5s per call), OpenAI compatibility, robust JSON mode, and high reasoning capability to handle out-of-order clarifications and refinements.
 
 **Turn budget management:** The prompt explicitly tells the LLM how many turns remain. When ≤2 turns remain, the prompt escalates to "CRITICAL: commit now." This prevents the agent from burning turns on unnecessary clarification.
 
@@ -65,8 +65,9 @@ The system prompt enforces six key behaviors:
 - **Temperature 0.0** produced overly rigid responses that didn't handle out-of-order information well. Temperature 0.3 gave better conversational flexibility while staying grounded.
 - **Returning recommendations on every turn** broke behavior probes — the agent must withhold recommendations until it has sufficient context.
 
-## 7. AI Tools Used
+## 7. AI Tools & Deployment
 
-- **Gemini 2.0 Flash**: Primary LLM for conversation handling
-- **sentence-transformers (all-MiniLM-L6-v2)**: Semantic embeddings for catalog search
-- AI-assisted development was used for code scaffolding; all design decisions and architecture were human-directed
+- **Groq / Llama 3.3 70B**: Primary LLM for conversation handling.
+- **sentence-transformers (all-MiniLM-L6-v2)**: Semantic embeddings for catalog search.
+- **Hugging Face Spaces (Docker)**: Deployed hosting platform. The 16GB free RAM CPU tier completely eliminates the Out of Memory (OOM) failures associated with loading PyTorch/embeddings in standard 512MB free host plans.
+- AI-assisted development was used for code scaffolding; all design decisions and architecture were human-directed.
